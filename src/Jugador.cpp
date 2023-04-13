@@ -48,11 +48,19 @@ void Jugador::keyPressed(int key) {
     else if (key == teclaArriba) {
         // Salto
         glm::vec2 salto;
-        if (angulo == 0 || angulo == 90) {
+        if (angulo == 0 ) {
             salto = glm::vec2(0.0f, -fuerza_salto);
         }
-        else if (angulo == 180 || angulo == 270) {
+        else if (angulo == 90)
+        {
+            salto = glm::vec2(-fuerza_salto,0.0f);
+        }
+        else if (angulo == 180) {
             salto = glm::vec2(0.0f, fuerza_salto);
+        }
+        else
+        {
+            salto = glm::vec2(fuerza_salto, 0.0f);
         }
 
         velocidad += salto;
