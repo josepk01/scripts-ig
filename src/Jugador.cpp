@@ -7,12 +7,14 @@
 Jugador::Jugador() : Jugador(0, 0, 10, 10, 0, 0, 0) {}
 
 Jugador::Jugador(float x, float y, float ancho, float alto, int teclaIzquierda, int teclaDerecha, int teclaArriba)
-    : posicion(x, y), velocidad(0.0f, 0.0f), ancho(ancho), alto(alto), gravedad(0.5),
+    : posicion(x, y), velocidad(0.0f, 0.0f), ancho(ancho), alto(alto), gravedad(1),
     teclaIzquierda(teclaIzquierda), teclaDerecha(teclaDerecha), teclaArriba(teclaArriba),
-    teclaIzquierdaPresionada(false), teclaDerechaPresionada(false), angulo(0) {}  // Add angulo(0)
-
+    teclaIzquierdaPresionada(false), teclaDerechaPresionada(false), angulo(0),fuerza_salto(16.0f) {}  // Add angulo(0)
 
 void Jugador::update() {
+
+    float dt = ofGetLastFrameTime();
+
     if (teclaIzquierdaPresionada && !teclaDerechaPresionada) {
         velocidad.x = -5.0f;
     }
@@ -20,19 +22,10 @@ void Jugador::update() {
         velocidad.x = 5.0f;
     }
     else {
-        velocidad.x = 0.0f;
+        velocidad.x *= 0.95f; // Añade un factor de fricción para frenar suavemente al jugador en el eje X
     }
 
-    // Actualizar la posición en función de la velocidad
-    posicion += velocidad;
-
-    // Aplicar gravedad
-    float angle_radians = -ofDegToRad(angulo);
-    float gravity_x = gravedad * sin(angle_radians);
-    float gravity_y = gravedad * cos(angle_radians);
-
-    velocidad.x += gravity_x;
-    velocidad.y += gravity_y;
+    updatePosicionConGravedad(dt, angulo, gravedad, camaraX, camaraY);
 
     // Comprobar la colisión con el suelo
     if (posicion.y + alto > ofGetHeight() * 2 / 3) {
@@ -41,7 +34,10 @@ void Jugador::update() {
     }
 }
 
-
+void Jugador::updateCamara(float camaraX, float camaraY) {
+    this->camaraX = camaraX;
+    this->camaraY = camaraY;
+}
 void Jugador::keyPressed(int key) {
     if (key == teclaIzquierda) {
         teclaIzquierdaPresionada = true;
@@ -50,9 +46,19 @@ void Jugador::keyPressed(int key) {
         teclaDerechaPresionada = true;
     }
     else if (key == teclaArriba) {
-        velocidad.y = -8.0;  // Salto
+        // Salto
+        glm::vec2 salto;
+        if (angulo == 0 || angulo == 90) {
+            salto = glm::vec2(0.0f, -fuerza_salto);
+        }
+        else if (angulo == 180 || angulo == 270) {
+            salto = glm::vec2(0.0f, fuerza_salto);
+        }
+
+        velocidad += salto;
     }
 }
+
 
 void Jugador::keyReleased(int key) {
     if (key == teclaIzquierda) {
@@ -62,45 +68,50 @@ void Jugador::keyReleased(int key) {
         teclaDerechaPresionada = false;
     }
 }
+void Jugador::update_aungulo(float ofAppAngulo)
+{
+    angulo = ofAppAngulo;
+}
 
+void Jugador::updatePosicionConGravedad(float dt, float angulo, float gravedad, float camaraX, float camaraY) {
+    float anguloRadianes = ofDegToRad(angulo);
+    float gravedadX = gravedad * sin(anguloRadianes);
+    float gravedadY = gravedad * cos(anguloRadianes);
 
+    velocidad.x += gravedadX;
+    velocidad.y += gravedadY;
+
+    posicion += velocidad;
+    //posicion.y += velocidad.y;
+}
 
 glm::vec2 Jugador::getPosicion() const {
     return posicion;
 }
-
 float Jugador::getX() const {
     return posicion.x;
 }
-
 float Jugador::getY() const {
     return posicion.y;
 }
-
 float Jugador::getAncho() const {
     return ancho;
 }
-
 float Jugador::getAlto() const {
     return alto;
 }
-
 void Jugador::setX(float x) {
     posicion.x = x;
 }
-
 void Jugador::setY(float y) {
     posicion.y = y;
 }
-
 float Jugador::getVelocidadX() const {
     return velocidad.x;
 }
-
 float Jugador::getVelocidadY() const {
     return velocidad.y;
 }
-
 void Jugador::setVelocidadY(float y) {
     velocidad.y = y;
 }

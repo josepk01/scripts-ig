@@ -23,6 +23,7 @@ public:
     //---
     void agregarObstaculos();
     bool colisionaObstaculo(const Jugador& jugador, const Obstaculo& obstaculo) const;
+    glm::vec2 convertirCoordenadas(float x, float y, float angulo, float camaraX, float camaraY);
     //---
     bool colisionaEnemigo(const Jugador& jugador, const Enemigo& enemigo) const;
     void agregarEnemigos();
@@ -45,4 +46,5 @@ private:
     float jugadorRadio;
     float camaraX;
     float camaraY;
+    bool inicio = false;
 };

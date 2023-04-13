@@ -5,11 +5,6 @@ void ofApp::setup() {
     angulo = 0;
     colorFondo.set(0, 0, 0); // Inicializa el color de fondo a negro
 
-    jugadorRadio = 25.0f;
-
-    // Inicializar Jugador, Texturas, Shaders, etc.
-    jugador1 = Jugador(300.0f, 100.0f, 50.0f, 50.0f, 'a', 'd', 'w'); // Modificar coordenada x a 300
-    jugador2 = Jugador(400.0f, 100.0f, 50.0f, 50.0f, OF_KEY_LEFT, OF_KEY_RIGHT, OF_KEY_UP); // Modificar coordenada x a 400
 
     // Inicializar el mapa
     mapa.inicializarMapa(this);
@@ -23,6 +18,10 @@ void ofApp::setup() {
     // Inicializar vidas
     vidasJugador1 = 3;
     vidasJugador2 = 3;
+    jugadorRadio = 25.0f;
+    // Inicializar Jugador, Texturas, Shaders, etc.
+    jugador1 = Jugador(0.0f, ofGetHeight() * 2 / 3, 50.0f, 50.0f, 'a', 'd', 'w');
+    jugador2 = Jugador(0.0f, ofGetHeight() * 2 / 3, 50.0f, 50.0f, OF_KEY_LEFT, OF_KEY_RIGHT, OF_KEY_UP);
 }
 void ofApp::actualizarColorFondo() {
     // Modificar este valor para controlar la velocidad a la que cambia el color
@@ -36,24 +35,43 @@ glm::vec2 ofApp::calcularCamaraPosicion() {
     float mediaX = (jugador1.getX() + jugador2.getX()) / 2;
     float mediaY = (jugador1.getY() + jugador2.getY()) / 2;
 
+    // Limitar la posición Y de la cámara para evitar mostrar demasiado espacio vacío arriba del suelo
+    float limiteY = ofGetHeight() * 2 / 3 - 100; // Ajustar el valor 100 según sea necesario
+    if (mediaY > limiteY) {
+        mediaY = limiteY;
+    }
+
     float lerpFactor = 0.1f; // Ajusta este valor para controlar la suavidad del seguimiento de la cámara
     camaraX = camaraX + lerpFactor * (mediaX - camaraX);
     camaraY = camaraY + lerpFactor * (mediaY - camaraY);
 
     return glm::vec2(camaraX, camaraY);
 }
+
 void ofApp::update() {
+    jugador1.updateCamara(camaraX, camaraY);
+    jugador2.updateCamara(camaraX, camaraY);
     jugador1.update();
     jugador2.update();
+
+    if (inicio == false)
+    {
+        vidasJugador1 = vidasJugador2 = 3;
+        jugador1.setX(0);
+        jugador2.setX(0);
+        jugador1.setY(ofGetHeight() * 2 / 3);
+        jugador2.setY(ofGetHeight() * 2 / 3);
+    }
+    // Calcular la posición media de los jugadores
+    glm::vec2 camaraPosicion = calcularCamaraPosicion();
+    camaraX = camaraPosicion.x;
+    camaraY = camaraPosicion.y;
 
     // Verificar colisiones y mantener a los jugadores en la pantalla
     verificarColisiones();
 
     checkSalidaPantalla();
-    // Calcular la posición media de los jugadores
-    glm::vec2 camaraPosicion = calcularCamaraPosicion();
-    camaraX = camaraPosicion.x;
-    camaraY = camaraPosicion.y;
+
     // Actualizar el color de fondo
     actualizarColorFondo();
     // Verificar si un jugador ha salido por la parte de atrás y reposicionar
@@ -71,6 +89,7 @@ void ofApp::update() {
         puntuacionJugador2++;
         tiempoAnterior = tiempoActual;
     }
+
     // Actualizar el color de fondo
     float tiempo = ofGetElapsedTimef();
     float r = (sin(tiempo * 0.5) + 1) * 127;
@@ -78,10 +97,13 @@ void ofApp::update() {
     float b = (sin(tiempo * 0.5 + (4 * PI / 3)) + 1) * 127;
     colorFondo.set(r, g, b);
 
-    if (vidasJugador1 <= 0 || vidasJugador2 <= 0)
-    {
+    if (vidasJugador1 <= 0 || vidasJugador2 <= 0) {
         resetJuego();
     }
+    if (jugador1.getX() == jugador2.getX() && jugador1.getY() == jugador2.getY()) {//parche feo para arreglar el problema del inicio
+        inicio = true;
+    }
+
 }
 
 void ofApp::agregarEnemigos() {
@@ -272,13 +294,20 @@ ofApp::ofApp()
 {
 }
 void ofApp::resetJuego() {
+    if (vidasJugador1 == 0) {
+        //sacar por pantalla quien gana
+    }
+    else {
+        //sacar por pantalla quien gana
+    }
+    inicio = false;
     vidasJugador1 = 3;
     vidasJugador2 = 3;
     puntuacionJugador1 = 0;
     puntuacionJugador2 = 0;
-    jugador1.setX(ofGetWidth() / 2 - jugadorRadio);
+    jugador1.setX(0);
     jugador1.setY(ofGetHeight() / 2 - jugadorRadio);
-    jugador2.setX(ofGetWidth() / 2 + jugadorRadio);
+    jugador2.setX(0);
     jugador2.setY(ofGetHeight() / 2 - jugadorRadio);
 }
 void ofApp::keyPressed(int key) {
@@ -290,6 +319,8 @@ void ofApp::keyPressed(int key) {
         if (angulo >= 360) {
             angulo = 0;
         }
+        jugador1.update_aungulo(angulo);
+        jugador2.update_aungulo(angulo);
     }
 }
 void ofApp::keyReleased(int key) {
@@ -316,4 +347,14 @@ bool ofApp::colisionaObstaculo(const Jugador& jugador, const Obstaculo& obstacul
     bool colisionaEnY = jugadorY + jugadorAlto > obstaculoY && jugadorY < obstaculoY + obstaculoAlto;
 
     return colisionaEnX && colisionaEnY;
+}
+glm::vec2 ofApp::convertirCoordenadas(float x, float y, float angulo, float camaraX, float camaraY) {
+    glm::vec2 centroPantalla(ofGetWidth() / 2, ofGetHeight() / 2);
+    glm::vec2 posicionRelativa(x - camaraX, y - camaraY);
+    float radianes = glm::radians(-angulo);
+    glm::vec2 rotado(
+        posicionRelativa.x * cos(radianes) - posicionRelativa.y * sin(radianes),
+        posicionRelativa.x * sin(radianes) + posicionRelativa.y * cos(radianes)
+    );
+    return centroPantalla + rotado;
 }

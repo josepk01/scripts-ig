@@ -25,11 +25,14 @@ public:
 
     void keyPressed(int key);
     void keyReleased(int key);
+    void update_aungulo(float ofAppAngulo);
+    void updatePosicionConGravedad(float dt, float angulo, float gravedad, float camaraX, float camaraY);
     float getVelocidadX() const;
     float getVelocidadY() const;
     void setVelocidadY(float y);
     void setVelocidadX(float x);
     void update();
+    void updateCamara(float camaraX, float camaraY);
 
 private:
     glm::vec2 posicion;
@@ -40,4 +43,11 @@ private:
     int teclaDerecha;
     float angulo;  
     int teclaArriba;
+    float x;
+    float y;
+    float velocidadX;
+    float velocidadY;
+    float camaraX;
+    float camaraY;
+    float fuerza_salto;
 };
