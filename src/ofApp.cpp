@@ -5,7 +5,8 @@ void ofApp::setup() {
     angulo = 0;
     colorFondo.set(0, 0, 0); // Inicializa el color de fondo a negro
 
-
+    techoAltura = ofGetHeight() / 7.0f;
+    sueloY = (ofGetHeight() * 2 / 3) - 50;
     // Inicializar el mapa
     mapa.inicializarMapa(this);
 
@@ -40,14 +41,12 @@ glm::vec2 ofApp::calcularCamaraPosicion() {
     if (mediaY > limiteY) {
         mediaY = limiteY;
     }
-
     float lerpFactor = 0.1f; // Ajusta este valor para controlar la suavidad del seguimiento de la cámara
     camaraX = camaraX + lerpFactor * (mediaX - camaraX);
     camaraY = camaraY + lerpFactor * (mediaY - camaraY);
 
     return glm::vec2(camaraX, camaraY);
 }
-
 void ofApp::update() {
     jugador1.updateCamara(camaraX, camaraY);
     jugador2.updateCamara(camaraX, camaraY);
@@ -57,8 +56,8 @@ void ofApp::update() {
     if (inicio == false)
     {
         vidasJugador1 = vidasJugador2 = 3;
-        jugador1.setX(0);
-        jugador2.setX(0);
+        jugador1.setX(200);
+        jugador2.setX(200);
         jugador1.setY(ofGetHeight() * 2 / 3);
         jugador2.setY(ofGetHeight() * 2 / 3);
     }
@@ -103,12 +102,10 @@ void ofApp::update() {
     if (jugador1.getX() == jugador2.getX() && jugador1.getY() == jugador2.getY()) {//parche feo para arreglar el problema del inicio
         inicio = true;
     }
-
 }
-
 void ofApp::agregarEnemigos() {
-    enemigos.push_back(Enemigo(800, ofGetHeight() * 2 / 3 - 50, 50, 50));
-    enemigos.push_back(Enemigo(1000, ofGetHeight() * 2 / 3 - 50, 50, 50));
+   // enemigos.push_back(Enemigo(800, ofGetHeight() * 2 / 3 - 50, 50, 50));
+   // enemigos.push_back(Enemigo(1000, ofGetHeight() * 2 / 3 - 50, 50, 50));
     // Agregar más enemigos aquí
 }
 bool ofApp::colisionaEnemigo(const Jugador& jugador, const Enemigo& enemigo) const {
@@ -120,11 +117,13 @@ bool ofApp::colisionaEnemigo(const Jugador& jugador, const Enemigo& enemigo) con
 }
 void ofApp::checkSalidaPantalla() {
     bool salir = false;
-    if (jugador1.getX() < -camaraX) {
+    bool jugador_1 = false;
+    if (jugador1.getX() < camaraX - (ofGetWidth()/2) + 50) {
         vidasJugador1--;
         salir = true;
+        jugador_1 = true;
     }
-    if (jugador2.getX() < -camaraX) {
+    if (jugador2.getX() < camaraX -(ofGetWidth() / 2) + 50) {
         vidasJugador2--;
         salir = true;
     }
@@ -133,10 +132,19 @@ void ofApp::checkSalidaPantalla() {
             resetJuego();
         }
         else {
-            jugador1.setX(ofGetWidth() / 2 - jugadorRadio);
-            jugador1.setY(ofGetHeight() / 2 - jugadorRadio);
-            jugador2.setX(ofGetWidth() / 2 + jugadorRadio);
-            jugador2.setY(ofGetHeight() / 2 - jugadorRadio);
+            float centerX = (jugador1.getX() + jugador2.getX()) / 2;
+            float centerY = (jugador1.getY() + jugador2.getY()) / 2;
+            if (jugador_1)
+            {
+                jugador1.setX(centerX - jugadorRadio);
+                jugador1.setY(centerY - jugadorRadio);
+            }
+            else {
+                jugador2.setX(centerX + jugadorRadio);
+                jugador2.setY(centerY - jugadorRadio);
+            }
+
+
         }
     }
 }
@@ -215,16 +223,13 @@ void ofApp::penalizarJugador(int jugador, int penalizacion) {
     }
 }
 void ofApp::verificarColisiones() {
-    float sueloY = ofGetHeight() * 2 / 3;
-
-    float techoAltura = ofGetHeight() / 6.0f;
 
     // Verificar colisiones con el suelo
-    if (jugador1.getY() + 50.0f > sueloY) {
-        jugador1.setY(sueloY - 50.0f);
+    if (jugador1.getY() > sueloY) {
+        jugador1.setY(sueloY);
     }
-    if (jugador2.getY() + 50.0f > sueloY) {
-        jugador2.setY(sueloY - 50.0f);
+    if (jugador2.getY() > sueloY) {
+        jugador2.setY(sueloY );
     }
     // Verificar colisiones con el techo
     if (jugador1.getY() < techoAltura) {
@@ -295,10 +300,10 @@ ofApp::ofApp()
 }
 void ofApp::resetJuego() {
     if (vidasJugador1 == 0) {
-        //sacar por pantalla quien gana
+        mostrarMensajeGanador("el Jugador1");
     }
     else {
-        //sacar por pantalla quien gana
+        mostrarMensajeGanador("el Jugador2");
     }
     inicio = false;
     vidasJugador1 = 3;
@@ -310,6 +315,32 @@ void ofApp::resetJuego() {
     jugador2.setX(0);
     jugador2.setY(ofGetHeight() / 2 - jugadorRadio);
 }
+void ofApp::mostrarMensajeGanador(string mensaje) {
+    // Establecer el color de fondo y el color del texto
+    ofBackground(0); // Negro
+    ofSetColor(255); // Blanco
+
+    // Establecer la fuente y el tamaño del texto
+    ofTrueTypeFont font;
+    font.load("arial.ttf", 72); // Cargar la fuente Arial con tamaño 72
+
+    // Calcular la posición y el tamaño del texto para que se ajuste a la pantalla
+    int x = ofGetWidth() / 2; // Posición horizontal centrada
+    int y = ofGetHeight() / 2; // Posición vertical centrada
+    ofRectangle rect = font.getStringBoundingBox("Ha ganado " + mensaje, x, y); // Obtener el rectángulo que encierra el texto
+    int w = rect.width; // Ancho del rectángulo
+    int h = rect.height; // Altura del rectángulo
+
+    // Dibujar el texto centrado en la pantalla
+    font.drawString("Ha ganado " + mensaje, x - w / 2, y + h / 2);
+
+    // Esperar 5 segundos antes de limpiar la pantalla y salir de la función
+    ofSleepMillis(5000);
+
+    // Limpiar la pantalla y restaurar el color de fondo
+    ofBackground(255); // Blanco
+}
+
 void ofApp::keyPressed(int key) {
     jugador1.keyPressed(key); // Propaga la tecla presionada al objeto jugador1
     jugador2.keyPressed(key); // Propaga la tecla presionada al objeto jugador2
@@ -329,7 +360,7 @@ void ofApp::keyReleased(int key) {
 }
 void ofApp::agregarObstaculos() {
     // Agrega obstáculos al mapa (x, y, ancho, alto)
-    obstaculos.emplace_back(400, ofGetHeight() * 2 / 3 - 50, 50, 50);
+    obstaculos.emplace_back(200, ofGetHeight() * 2 / 3 - 50, 50, 50);
     obstaculos.emplace_back(600, ofGetHeight() * 2 / 3 - 50, 50, 50);
     // ... Agrega más obstáculos según sea necesario
 }
@@ -357,4 +388,12 @@ glm::vec2 ofApp::convertirCoordenadas(float x, float y, float angulo, float cama
         posicionRelativa.x * sin(radianes) + posicionRelativa.y * cos(radianes)
     );
     return centroPantalla + rotado;
+}
+float ofApp::getTecho()
+{
+    return techoAltura;
+}
+float ofApp::getSuelo()
+{
+    return sueloY;
 }

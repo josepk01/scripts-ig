@@ -15,14 +15,31 @@ void Jugador::update() {
 
     float dt = ofGetLastFrameTime();
 
+    float anguloRadianes = ofDegToRad(angulo);
+
     if (teclaIzquierdaPresionada && !teclaDerechaPresionada) {
-        velocidad.x = -5.0f;
+        if (angulo == 0 || angulo == 180) {
+            velocidad.x = -5.0f * cos(anguloRadianes);
+        }
+        else if (angulo == 90 || angulo == 270) {
+            velocidad.y = 5.0f * sin(anguloRadianes);
+        }
     }
     else if (teclaDerechaPresionada && !teclaIzquierdaPresionada) {
-        velocidad.x = 5.0f;
+        if (angulo == 0 || angulo == 180) {
+            velocidad.x = 5.0f * cos(anguloRadianes);
+        }
+        else if (angulo == 90 || angulo == 270) {
+            velocidad.y = -5.0f * sin(anguloRadianes);
+        }
     }
     else {
-        velocidad.x *= 0.95f; // Añade un factor de fricción para frenar suavemente al jugador en el eje X
+        if (angulo == 0 || angulo == 180) {
+            velocidad.x *= 0.80f; // Añade un factor de fricción para frenar suavemente al jugador en el eje X
+        }
+        else if (angulo == 90 || angulo == 270) {
+            velocidad.y *= 0.80f; // Añade un factor de fricción para frenar suavemente al jugador en el eje Y
+        }
     }
 
     updatePosicionConGravedad(dt, angulo, gravedad, camaraX, camaraY);
@@ -33,6 +50,7 @@ void Jugador::update() {
         velocidad.y = 0.0f;
     }
 }
+
 
 void Jugador::updateCamara(float camaraX, float camaraY) {
     this->camaraX = camaraX;
@@ -45,7 +63,7 @@ void Jugador::keyPressed(int key) {
     else if (key == teclaDerecha) {
         teclaDerechaPresionada = true;
     }
-    else if (key == teclaArriba) {
+    if (key == teclaArriba) {
         // Salto
         glm::vec2 salto;
         if (angulo == 0 ) {
@@ -62,11 +80,9 @@ void Jugador::keyPressed(int key) {
         {
             salto = glm::vec2(fuerza_salto, 0.0f);
         }
-
         velocidad += salto;
     }
 }
-
 
 void Jugador::keyReleased(int key) {
     if (key == teclaIzquierda) {
@@ -90,7 +106,6 @@ void Jugador::updatePosicionConGravedad(float dt, float angulo, float gravedad, 
     velocidad.y += gravedadY;
 
     posicion += velocidad;
-    //posicion.y += velocidad.y;
 }
 
 glm::vec2 Jugador::getPosicion() const {

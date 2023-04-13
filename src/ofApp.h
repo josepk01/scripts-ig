@@ -24,11 +24,15 @@ public:
     void agregarObstaculos();
     bool colisionaObstaculo(const Jugador& jugador, const Obstaculo& obstaculo) const;
     glm::vec2 convertirCoordenadas(float x, float y, float angulo, float camaraX, float camaraY);
+    float getTecho();
+    float getSuelo();
     //---
     bool colisionaEnemigo(const Jugador& jugador, const Enemigo& enemigo) const;
     void agregarEnemigos();
     void checkSalidaPantalla();
     void resetJuego();
+
+    void mostrarMensajeGanador(string mensaje);
 
 private:
     Jugador jugador1;
@@ -47,4 +51,6 @@ private:
     float camaraX;
     float camaraY;
     bool inicio = false;
+    float techoAltura;
+    float sueloY;
 };
