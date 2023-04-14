@@ -16,3 +16,7 @@ void Mapa::dibujarMapa() {
     ofDrawRectangle(0, 0, mapaAncho, techo); // Dibujar el techo
     
 }
+float Mapa::getMapa()
+{
+    return mapaAncho;
+}

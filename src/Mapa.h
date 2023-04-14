@@ -8,7 +8,9 @@ public:
     void inicializarMapa(ofApp* app);
     void dibujarMapa();
 
+    float getMapa();
+
 private:
-    float mapaAncho = 3000.f;
+    float mapaAncho;
     float suelo, techo;
 };

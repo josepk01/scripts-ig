@@ -99,21 +99,18 @@ void ofApp::update() {
     colorFondo.set(r, g, b);
 
 
-
-    if (vidasJugador1 <= 0 || vidasJugador2 <= 0) {
-        if (salioGanador)
-        {
-            // Pausa la ejecución del programa durante 5 segundos
-            std::this_thread::sleep_for(std::chrono::seconds(5));
-            resetJuego();
-            salioGanador = false;
-
-        }
+    if (salioGanador)
+    {
+        // Pausa la ejecución del programa durante 5 segundos
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+        resetJuego();
+        salioGanador = false;
 
     }
     if (jugador1.getX() == jugador2.getX() && jugador1.getY() == jugador2.getY()) {//parche feo para arreglar el problema del inicio
         inicio = true;
     }
+
 }
 void ofApp::agregarEnemigos() {
     //Oleada 1 
@@ -246,8 +243,13 @@ void ofApp::draw() {
     else if (vidasJugador2 == 0) {
         mostrarMensajeGanador("Jugador 1");
     }
-
-
+    if (mapa.getMapa() == jugador1.getX())
+    {
+        mostrarMensajeGanador("Jugador 1");
+    }
+    else if (mapa.getMapa() == jugador2.getX()) {
+        mostrarMensajeGanador("Jugador 2");
+    }
 }
 void ofApp::penalizarJugador(int jugador, int penalizacion) {
     if (jugador == 1) {
@@ -282,12 +284,10 @@ void ofApp::verificarColisiones() {
     for (const auto& obstaculo : obstaculos) {
         if (colisionaObstaculo(jugador1, obstaculo)) {
             // Resuelve la colisión (por ejemplo, detén el movimiento del jugador)
-            float diferenciaY = std::abs(jugador1.getY() + jugador1.getAlto() - obstaculo.getY());
-            if (diferenciaY < 5) { // Ajuste este valor según sea necesario
-                jugador1.setY(obstaculo.getY() - jugador1.getAlto());
-                jugador1.setVelocidadY(0);
-            }
-            else {
+            float diferenciaX = std::abs(jugador1.getX() + jugador1.getAncho() / 2 - (obstaculo.getX() + obstaculo.getAncho() / 2));
+            float diferenciaY = std::abs(jugador1.getY() + jugador1.getAlto() / 2 - (obstaculo.getY() + obstaculo.getAlto() / 2));
+
+            if (diferenciaX > diferenciaY) {
                 if (jugador1.getX() < obstaculo.getX()) {
                     jugador1.setX(obstaculo.getX() - jugador1.getAncho());
                 }
@@ -296,15 +296,22 @@ void ofApp::verificarColisiones() {
                 }
                 jugador1.setVelocidadX(0);
             }
+            else {
+                if (jugador1.getY() < obstaculo.getY()) {
+                    jugador1.setY(obstaculo.getY() - jugador1.getAlto());
+                }
+                else {
+                    jugador1.setY(obstaculo.getY() + obstaculo.getAlto());
+                }
+                jugador1.setVelocidadY(0);
+            }
         }
         if (colisionaObstaculo(jugador2, obstaculo)) {
             // Resuelve la colisión
-            float diferenciaY = std::abs(jugador2.getY() + jugador2.getAlto() - obstaculo.getY());
-            if (diferenciaY < 5) { // Ajuste este valor según sea necesario
-                jugador2.setY(obstaculo.getY() - jugador2.getAlto());
-                jugador2.setVelocidadY(0);
-            }
-            else {
+            float diferenciaX = std::abs(jugador2.getX() + jugador2.getAncho() / 2 - (obstaculo.getX() + obstaculo.getAncho() / 2));
+            float diferenciaY = std::abs(jugador2.getY() + jugador2.getAlto() / 2 - (obstaculo.getY() + obstaculo.getAlto() / 2));
+
+            if (diferenciaX > diferenciaY) {
                 if (jugador2.getX() < obstaculo.getX()) {
                     jugador2.setX(obstaculo.getX() - jugador2.getAncho());
                 }
@@ -312,6 +319,15 @@ void ofApp::verificarColisiones() {
                     jugador2.setX(obstaculo.getX() + obstaculo.getAncho());
                 }
                 jugador2.setVelocidadX(0);
+            }
+            else {
+                if (jugador2.getY() < obstaculo.getY()) {
+                    jugador2.setY(obstaculo.getY() - jugador2.getAlto());
+                }
+                else {
+                    jugador2.setY(obstaculo.getY() + obstaculo.getAlto());
+                }
+                jugador2.setVelocidadY(0);
             }
         }
     }
@@ -329,8 +345,8 @@ void ofApp::verificarColisiones() {
         }
     }
     // Mantener a los jugadores dentro de la ventana de la aplicación
-    jugador1.setX(std::max(0.0f, std::min(3000.f - 50.0f, jugador1.getX())));
-    jugador2.setX(std::max(0.0f, std::min(3000.f - 50.0f, jugador2.getX())));
+    jugador1.setX(std::max(0.0f, std::min(mapa.getMapa() + 50, jugador1.getX())));
+    jugador2.setX(std::max(0.0f, std::min(mapa.getMapa() + 50, jugador2.getX())));
 }
 ofApp::ofApp()
 {
@@ -350,7 +366,7 @@ void ofApp::mostrarMensajeGanador(string ganador) {
     string mensaje = ganador + " ha ganado!";
 
     // Establece el color del texto a blanco
-    ofSetColor(255, 255, 255);
+    ofSetColor(0, 0, 0);
 
     // Calcular el ancho y alto del texto
     float textWidth = mensaje.length() * 8; // 8 pixels de ancho por caracter
@@ -365,9 +381,6 @@ void ofApp::mostrarMensajeGanador(string ganador) {
 
     salioGanador = true;
 }
-
-
-
 void ofApp::keyPressed(int key) {
     jugador1.keyPressed(key); // Propaga la tecla presionada al objeto jugador1
     jugador2.keyPressed(key); // Propaga la tecla presionada al objeto jugador2
@@ -386,16 +399,13 @@ void ofApp::keyReleased(int key) {
     jugador2.keyReleased(key); // Propaga la tecla liberada al objeto jugador2
 }
 void ofApp::agregarObstaculos() {
+    // Agregar obstáculos en posiciones específicas
     obstaculos.emplace_back(200, ofGetHeight() * 2 / 3 - 100, 50, 50);
     obstaculos.emplace_back(250, ofGetHeight() * 2 / 3 - 100, 50, 100);
     obstaculos.emplace_back(250, ofGetHeight() * 2 / 3 - 400, 100, 200);
     obstaculos.emplace_back(400, ofGetHeight() * 2 / 3 - 200, 300, 50);
-    obstaculos.emplace_back(550, ofGetHeight() * 2 / 3 - 250, 100, 50);
     obstaculos.emplace_back(600, ofGetHeight() * 2 / 3 - 250, 50, 150);
     obstaculos.emplace_back(500, ofGetHeight() * 2 / 3 - 50, 50, 50);
-    obstaculos.emplace_back(700, ofGetHeight() * 2 / 3 - 100, 500, 50);
-    obstaculos.emplace_back(750, ofGetHeight() * 2 / 3 - 500, 50, 150);
-    obstaculos.emplace_back(850, ofGetHeight() * 2 / 3 - 500, 50, 150);
     obstaculos.emplace_back(950, ofGetHeight() * 2 / 3 - 500, 50, 100);
     obstaculos.emplace_back(1000, ofGetHeight() * 2 / 3 - 250, 50, 50);
     obstaculos.emplace_back(1200, ofGetHeight() * 2 / 3 - 250, 50, 100);
