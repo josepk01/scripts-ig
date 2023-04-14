@@ -53,4 +53,6 @@ private:
     bool inicio = false;
     float techoAltura;
     float sueloY;
+    bool salioGanador;
+
 };

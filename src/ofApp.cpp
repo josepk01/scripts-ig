@@ -1,5 +1,6 @@
 #include "ofApp.h"
 #include <glm/glm.hpp>
+#include <thread>
 
 void ofApp::setup() {
     angulo = 0;
@@ -23,6 +24,7 @@ void ofApp::setup() {
     // Inicializar Jugador, Texturas, Shaders, etc.
     jugador1 = Jugador(0.0f, ofGetHeight() * 2 / 3, 50.0f, 50.0f, 'a', 'd', 'w');
     jugador2 = Jugador(0.0f, ofGetHeight() * 2 / 3, 50.0f, 50.0f, OF_KEY_LEFT, OF_KEY_RIGHT, OF_KEY_UP);
+    salioGanador = false;
 }
 void ofApp::actualizarColorFondo() {
     // Modificar este valor para controlar la velocidad a la que cambia el color
@@ -96,17 +98,36 @@ void ofApp::update() {
     float b = (sin(tiempo * 0.5 + (4 * PI / 3)) + 1) * 127;
     colorFondo.set(r, g, b);
 
+
+
     if (vidasJugador1 <= 0 || vidasJugador2 <= 0) {
-        resetJuego();
+        if (salioGanador)
+        {
+            // Pausa la ejecución del programa durante 5 segundos
+            std::this_thread::sleep_for(std::chrono::seconds(5));
+            resetJuego();
+            salioGanador = false;
+
+        }
+
     }
     if (jugador1.getX() == jugador2.getX() && jugador1.getY() == jugador2.getY()) {//parche feo para arreglar el problema del inicio
         inicio = true;
     }
 }
 void ofApp::agregarEnemigos() {
-   // enemigos.push_back(Enemigo(800, ofGetHeight() * 2 / 3 - 50, 50, 50));
-   // enemigos.push_back(Enemigo(1000, ofGetHeight() * 2 / 3 - 50, 50, 50));
-    // Agregar más enemigos aquí
+    //Oleada 1 
+    enemigos.push_back(Enemigo(400, ofGetHeight() * 2 / 3 - 50, 50, 50));
+    enemigos.push_back(Enemigo(600, ofGetHeight() * 2 / 3 - 50, 50, 50));
+
+    //Oleada 2
+    enemigos.push_back(Enemigo(1000, ofGetHeight() * 2 / 3 - 50, 50, 50));
+    enemigos.push_back(Enemigo(1100, ofGetHeight() * 2 / 3 - 50, 50, 50));
+    enemigos.push_back(Enemigo(1200, ofGetHeight() * 2 / 3 - 50, 50, 50));
+
+    //Oleada 3
+    enemigos.push_back(Enemigo(1600, ofGetHeight() * 2 / 3 - 50, 50, 50));
+    enemigos.push_back(Enemigo(1700, ofGetHeight() * 2 / 3 - 50, 50, 50));
 }
 bool ofApp::colisionaEnemigo(const Jugador& jugador, const Enemigo& enemigo) const {
     float distanciaX = jugador.getX() + jugador.getAncho() / 2 - (enemigo.getX() + enemigo.getAncho() / 2);
@@ -129,7 +150,14 @@ void ofApp::checkSalidaPantalla() {
     }
     if (salir) {
         if (vidasJugador1 <= 0 || vidasJugador2 <= 0) {
-            resetJuego();
+
+            if (salioGanador)
+            {
+                // Pausa la ejecución del programa durante 5 segundos
+                std::this_thread::sleep_for(std::chrono::seconds(5));
+                resetJuego();
+                salioGanador = false;
+            }
         }
         else {
             float centerX = (jugador1.getX() + jugador2.getX()) / 2;
@@ -211,6 +239,15 @@ void ofApp::draw() {
     ofSetColor(255, 0, 255); // Establecer el color del texto al mismo color que el jugador 2
     string vidasTextoJugador2 = "Vidas Jugador 2: " + ofToString(vidasJugador2);
     ofDrawBitmapString(vidasTextoJugador2, 10, 40); // Dibujar el texto un poco más abajo del texto del jugador 1
+
+    if (vidasJugador1 == 0) {
+        mostrarMensajeGanador("Jugador 2");
+    }
+    else if (vidasJugador2 == 0) {
+        mostrarMensajeGanador("Jugador 1");
+    }
+
+
 }
 void ofApp::penalizarJugador(int jugador, int penalizacion) {
     if (jugador == 1) {
@@ -299,12 +336,6 @@ ofApp::ofApp()
 {
 }
 void ofApp::resetJuego() {
-    if (vidasJugador1 == 0) {
-        mostrarMensajeGanador("el Jugador1");
-    }
-    else {
-        mostrarMensajeGanador("el Jugador2");
-    }
     inicio = false;
     vidasJugador1 = 3;
     vidasJugador2 = 3;
@@ -315,31 +346,27 @@ void ofApp::resetJuego() {
     jugador2.setX(0);
     jugador2.setY(ofGetHeight() / 2 - jugadorRadio);
 }
-void ofApp::mostrarMensajeGanador(string mensaje) {
-    // Establecer el color de fondo y el color del texto
-    ofBackground(0); // Negro
-    ofSetColor(255); // Blanco
+void ofApp::mostrarMensajeGanador(string ganador) {
+    string mensaje = ganador + " ha ganado!";
 
-    // Establecer la fuente y el tamaño del texto
-    ofTrueTypeFont font;
-    font.load("arial.ttf", 72); // Cargar la fuente Arial con tamaño 72
+    // Establece el color del texto a blanco
+    ofSetColor(255, 255, 255);
 
-    // Calcular la posición y el tamaño del texto para que se ajuste a la pantalla
-    int x = ofGetWidth() / 2; // Posición horizontal centrada
-    int y = ofGetHeight() / 2; // Posición vertical centrada
-    ofRectangle rect = font.getStringBoundingBox("Ha ganado " + mensaje, x, y); // Obtener el rectángulo que encierra el texto
-    int w = rect.width; // Ancho del rectángulo
-    int h = rect.height; // Altura del rectángulo
+    // Calcular el ancho y alto del texto
+    float textWidth = mensaje.length() * 8; // 8 pixels de ancho por caracter
+    float textHeight = 14; // 14 pixels de alto por caracter
 
-    // Dibujar el texto centrado en la pantalla
-    font.drawString("Ha ganado " + mensaje, x - w / 2, y + h / 2);
+    // Calcular las coordenadas (x, y) para centrar el texto en la pantalla
+    float posX = (ofGetWidth() - textWidth) / 2.0f;
+    float posY = (ofGetHeight() - textHeight) / 2.0f;
 
-    // Esperar 5 segundos antes de limpiar la pantalla y salir de la función
-    ofSleepMillis(5000);
+    // Dibujar el mensaje de ganador centrado en la pantalla
+    ofDrawBitmapString(mensaje, posX, posY);
 
-    // Limpiar la pantalla y restaurar el color de fondo
-    ofBackground(255); // Blanco
+    salioGanador = true;
 }
+
+
 
 void ofApp::keyPressed(int key) {
     jugador1.keyPressed(key); // Propaga la tecla presionada al objeto jugador1
@@ -359,10 +386,27 @@ void ofApp::keyReleased(int key) {
     jugador2.keyReleased(key); // Propaga la tecla liberada al objeto jugador2
 }
 void ofApp::agregarObstaculos() {
-    // Agrega obstáculos al mapa (x, y, ancho, alto)
-    obstaculos.emplace_back(200, ofGetHeight() * 2 / 3 - 50, 50, 50);
-    obstaculos.emplace_back(600, ofGetHeight() * 2 / 3 - 50, 50, 50);
-    // ... Agrega más obstáculos según sea necesario
+    obstaculos.emplace_back(200, ofGetHeight() * 2 / 3 - 100, 50, 50);
+    obstaculos.emplace_back(250, ofGetHeight() * 2 / 3 - 100, 50, 100);
+    obstaculos.emplace_back(250, ofGetHeight() * 2 / 3 - 400, 100, 200);
+    obstaculos.emplace_back(400, ofGetHeight() * 2 / 3 - 200, 300, 50);
+    obstaculos.emplace_back(550, ofGetHeight() * 2 / 3 - 250, 100, 50);
+    obstaculos.emplace_back(600, ofGetHeight() * 2 / 3 - 250, 50, 150);
+    obstaculos.emplace_back(500, ofGetHeight() * 2 / 3 - 50, 50, 50);
+    obstaculos.emplace_back(700, ofGetHeight() * 2 / 3 - 100, 500, 50);
+    obstaculos.emplace_back(750, ofGetHeight() * 2 / 3 - 500, 50, 150);
+    obstaculos.emplace_back(850, ofGetHeight() * 2 / 3 - 500, 50, 150);
+    obstaculos.emplace_back(950, ofGetHeight() * 2 / 3 - 500, 50, 100);
+    obstaculos.emplace_back(1000, ofGetHeight() * 2 / 3 - 250, 50, 50);
+    obstaculos.emplace_back(1200, ofGetHeight() * 2 / 3 - 250, 50, 100);
+    obstaculos.emplace_back(1100, ofGetHeight() * 2 / 3 - 350, 100, 50);
+    obstaculos.emplace_back(1400, ofGetHeight() * 2 / 3 - 100, 50, 100);
+    obstaculos.emplace_back(1350, ofGetHeight() * 2 / 3 - 400, 50, 150);
+    obstaculos.emplace_back(1350, ofGetHeight() * 2 / 3 - 400, 200, 50);
+    obstaculos.emplace_back(1500, ofGetHeight() * 2 / 3 - 200, 100, 200);
+    obstaculos.emplace_back(1550, ofGetHeight() * 2 / 3 - 400, 50, 150);
+    obstaculos.emplace_back(1600, ofGetHeight() * 2 / 3 - 500, 50, 250);
+    obstaculos.emplace_back(1600, ofGetHeight() * 2 / 3, 50, 200);
 }
 bool ofApp::colisionaObstaculo(const Jugador& jugador, const Obstaculo& obstaculo) const {
     float jugadorX = jugador.getX();
